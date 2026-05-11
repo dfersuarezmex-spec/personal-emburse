@@ -48,7 +48,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);font-si
 
 /* ─── LAYOUT ─── */
 #app{display:flex;height:100vh;overflow:hidden}
-#sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden}
+#sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden;min-height:0}
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 #topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
 #content{flex:1;overflow-y:auto;padding:24px}
@@ -66,7 +66,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);font-si
 .nav-item .nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
 .nav-item .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;min-width:18px;text-align:center}
 
-.projects-header{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 4px 12px}
+.projects-header{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 4px 12px;flex-shrink:0}
 .projects-header span{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
 .btn-icon{background:none;border:none;color:var(--text3);cursor:pointer;padding:3px 6px;border-radius:6px;font-size:14px;line-height:1;transition:all .15s}
 .btn-icon:hover{background:var(--surface2);color:var(--text)}
@@ -196,9 +196,9 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);font-si
 .week-task-block{position:absolute;left:2px;right:2px;background:var(--accent);border-radius:4px;font-size:10px;padding:2px 4px;overflow:hidden;cursor:pointer;z-index:1}
 
 /* ─── MODAL ─── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:16px;padding-top:max(16px,5vh);overflow-y:auto;opacity:0;pointer-events:none;transition:opacity .2s}
 .modal-overlay.open{opacity:1;pointer-events:all}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow2);transform:translateY(20px);transition:transform .2s}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:var(--shadow2);transform:translateY(20px);transition:transform .2s;margin:0 auto}
 .modal-overlay.open .modal{transform:translateY(0)}
 .modal.modal-sm{max-width:420px}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -1007,10 +1007,10 @@ function taskRowHtml(t, mode='full') {
       <div class="task-meta">
         ${dateLabel?`<span class="${dateClass}">${dateLabel}</span>`:''}
         <span class="priority-badge ${t.priority}">${t.priority}</span>
-        ${proj?`<span class="project-badge" style="background:${proj.color}20;color:${proj.color}">${esc(proj.name)}</span>`:''}
+        ${(proj && proj.name)?`<span class="project-badge" style="background:${proj.color}20;color:${proj.color}">${esc(proj.name)}</span>`:''}
         ${tags.map(tag=>`<span class="tag-chip">${esc(tag.name)}</span>`).join('')}
         ${subs.length?`<span class="subtask-progress">✓ ${subsDone}/${subs.length}</span>`:''}
-        ${t.recurrence!=='none'?`<span class="text-xs text-muted">🔁 ${t.recurrence}</span>`:''}
+        ${(t.recurrence && t.recurrence!=='none')?`<span class="text-xs text-muted">🔁 ${t.recurrence}</span>`:''}
       </div>
     </div>
   </div>`;
@@ -1113,14 +1113,16 @@ function renderWeekView() {
           }).join('')}
         </div>`).join('')}
       <!-- All-day tasks -->
-      <div style="display:grid;grid-template-columns:50px repeat(7,1fr);gap:3px;margin-top:12px">
-        <div class="week-hour-label" style="font-size:9px">Sin hora</div>
+      <div style="margin-top:10px;margin-bottom:4px;font-size:11px;font-weight:600;color:var(--text3);padding-left:54px;text-transform:uppercase;letter-spacing:.5px">Sin hora asignada</div>
+      <div style="display:grid;grid-template-columns:50px repeat(7,1fr);gap:3px;margin-bottom:12px">
+        <div></div>
         ${days.map(date=>{
           const dayTasks=(tasksByDate[date]||[]).filter(t=>!t.due_time);
-          return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:4px;min-height:48px">
+          return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px;min-height:52px">
+            ${dayTasks.length===0?'<span style="font-size:10px;color:var(--text3)">—</span>':''}
             ${dayTasks.map(t=>{
               const proj=state.projects.find(p=>p.id===t.project_id);
-              return `<div class="cal-task-chip" style="background:${(proj||{color:'var(--accent)'}).color}30;color:${(proj||{color:'var(--accent)'}).color}" onclick="openEditTask('${t.id}')">${esc(t.title.slice(0,12))}</div>`;
+              return `<div class="cal-task-chip" style="background:${(proj||{color:'var(--accent)'}).color}30;color:${(proj||{color:'var(--accent)'}).color};margin-bottom:3px" onclick="openEditTask('${t.id}')">${esc(t.title.slice(0,14))}</div>`;
             }).join('')}
           </div>`;
         }).join('')}
@@ -1322,7 +1324,15 @@ async function saveTask() {
     } else {
       const res=await sbFetch('tasks',{method:'POST',body:JSON.stringify(data)});
       const newTask=Array.isArray(res)?res[0]:res;
-      if(newTask){state.tasks.push(newTask);}
+      if(newTask){
+        state.tasks.push(newTask);
+        // Guardar tags seleccionados para la tarea nueva
+        const selectedTags=[...document.querySelectorAll('#task-tags-wrap .tag-pill.selected')].map(el=>el.dataset.id);
+        for(const tagId of selectedTags){
+          await sbFetch('task_tags',{method:'POST',body:JSON.stringify({task_id:newTask.id,tag_id:tagId})}).catch(()=>{});
+        }
+        if(selectedTags.length){ state.taskTags[newTask.id]=selectedTags; }
+      }
     }
     closeModal('task-modal');
     showToast(id?'Tarea actualizada':'Tarea creada','success');
