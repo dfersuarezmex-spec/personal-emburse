@@ -343,7 +343,6 @@ input[type=color]{padding:2px;height:36px;cursor:pointer}
     <button class="pin-btn del" onclick="pinKey('DEL')">⌫</button>
   </div>
   <div id="pin-error"></div>
-  <div style="font-size:11px;color:var(--text3);margin-top:8px">PIN por defecto: <strong style="color:var(--text2)">1234</strong></div>
 </div>
 
 <!-- OVERLAY (mobile) -->
@@ -603,8 +602,12 @@ input[type=color]{padding:2px;height:36px;cursor:pointer}
 // ═══════════════════════════════════════════════════
 // CONFIG & STATE
 // ═══════════════════════════════════════════════════
-let SB_URL = localStorage.getItem('sb_url') || '';
-let SB_KEY  = localStorage.getItem('sb_key')  || '';
+// ── Configuración Supabase ──────────────────────────
+// Puedes hardcodear aquí tus valores para que funcione en cualquier dispositivo sin configurar:
+const SB_URL_DEFAULT = localStorage.getItem('sb_url') || '';
+const SB_KEY_DEFAULT = localStorage.getItem('sb_key') || '';
+let SB_URL = SB_URL_DEFAULT;
+let SB_KEY  = SB_KEY_DEFAULT;
 
 let state = {
   projects: [], tasks: [], tags: [], taskTags: {}, subtasks: {}, comments: {}, attachments: {},
@@ -644,8 +647,23 @@ function updateDots() {
 
 async function checkPin() {
   const entered = await simpleHash(pinBuffer);
-  const stored = localStorage.getItem('pin_hash') || await simpleHash('1234');
-  if (!localStorage.getItem('pin_hash')) localStorage.setItem('pin_hash', await simpleHash('1234'));
+  // Si no hay PIN local, intentar cargarlo desde Supabase
+  if (!localStorage.getItem('pin_hash')) {
+    try {
+      const res = await fetch(SB_URL + '/rest/v1/app_config?key=eq.pin_hash&select=value', {
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      });
+      const data = await res.json();
+      if (data && data[0] && data[0].value) {
+        localStorage.setItem('pin_hash', data[0].value);
+      } else {
+        localStorage.setItem('pin_hash', await simpleHash('1234'));
+      }
+    } catch(e) {
+      localStorage.setItem('pin_hash', await simpleHash('1234'));
+    }
+  }
+  const stored = localStorage.getItem('pin_hash');
   if (entered === stored) {
     document.getElementById('lock-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
