@@ -604,10 +604,10 @@ input[type=color]{padding:2px;height:36px;cursor:pointer}
 // ═══════════════════════════════════════════════════
 // ── Configuración Supabase ──────────────────────────
 // Puedes hardcodear aquí tus valores para que funcione en cualquier dispositivo sin configurar:
-const SB_URL_DEFAULT = localStorage.getItem('sb_url') || '';
-const SB_KEY_DEFAULT = localStorage.getItem('sb_key') || '';
-let SB_URL = SB_URL_DEFAULT;
-let SB_KEY  = SB_KEY_DEFAULT;
+const SB_URL_DEFAULT = 'https://sfqtdhbynrtokhsrifon.supabase.co';
+const SB_KEY_DEFAULT = 'sb_publishable_FL5GJdKIlW3JKYPQrQcsnA_9-yoAeph';
+let SB_URL = localStorage.getItem('sb_url') || SB_URL_DEFAULT;
+let SB_KEY  = localStorage.getItem('sb_key')  || SB_KEY_DEFAULT;
 
 let state = {
   projects: [], tasks: [], tags: [], taskTags: {}, subtasks: {}, comments: {}, attachments: {},
