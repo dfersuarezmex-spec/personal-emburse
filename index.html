@@ -418,6 +418,48 @@ input[type=color]{padding:2px;height:36px;cursor:pointer}
 <!-- TOAST -->
 <div class="toast-container" id="toast-container"></div>
 
+<!-- SEGUIMIENTO MODAL -->
+<div class="modal-overlay" id="followup-modal" onclick="closeModalOnOverlay(event,'followup-modal')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">📋 Crear tarea de seguimiento</span>
+      <button class="modal-close" onclick="closeModal('followup-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Tarea completada. ¿Quieres crear una tarea de seguimiento?</p>
+      <div class="form-group mb-2">
+        <label>Título</label>
+        <input type="text" id="fu-title" placeholder="Título del seguimiento"/>
+      </div>
+      <div class="form-group mb-2">
+        <label>Proyecto</label>
+        <select id="fu-project"></select>
+      </div>
+      <div class="form-group mb-2">
+        <label>Prioridad</label>
+        <select id="fu-priority">
+          <option value="urgente">🔴 Urgente</option>
+          <option value="alta">🟠 Alta</option>
+          <option value="media" selected>🟡 Media</option>
+          <option value="baja">🟢 Baja</option>
+        </select>
+      </div>
+      <div class="form-group mb-2">
+        <label>Fecha límite</label>
+        <input type="date" id="fu-deadline"/>
+      </div>
+      <div class="form-group">
+        <label>Notas</label>
+        <textarea id="fu-notes" placeholder="Notas del seguimiento..." style="min-height:60px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('followup-modal')">Omitir</button>
+      <button class="btn btn-primary" onclick="saveFollowup()">Crear seguimiento</button>
+    </div>
+  </div>
+</div>
+
 <!-- TASK MODAL -->
 <div class="modal-overlay" id="task-modal" onclick="closeModalOnOverlay(event,'task-modal')">
   <div class="modal">
@@ -1386,6 +1428,7 @@ async function toggleTaskDone(id) {
     }
     renderSidebar(); renderView();
     showToast(done?'✅ Completada':'↩ Reabierta','success');
+    if(done) openFollowupModal(task);
   }catch(e){showToast('Error: '+e.message,'error')}
 }
 
@@ -1401,6 +1444,53 @@ async function createRecurrence(task){
   const nt=Array.isArray(res)?res[0]:res;
   if(nt) state.tasks.push(nt);
   showToast('🔁 Tarea recurrente creada','success');
+}
+
+// ═══════════════════════════════════════════════════
+// SEGUIMIENTO
+// ═══════════════════════════════════════════════════
+function openFollowupModal(task) {
+  const suggested = new Date();
+  suggested.setDate(suggested.getDate() + 7);
+  document.getElementById('fu-title').value = 'Seguimiento: ' + task.title;
+  document.getElementById('fu-notes').value = '';
+  document.getElementById('fu-deadline').value = fmtYMD(suggested);
+  document.getElementById('fu-priority').value = task.priority || 'media';
+  const projSel = document.getElementById('fu-project');
+  projSel.innerHTML = state.projects.map(p =>
+    '<option value="' + p.id + '" ' + (p.id === task.project_id ? 'selected' : '') + '>' + esc(p.name) + '</option>'
+  ).join('');
+  projSel.dataset.originId = task.id;
+  openModal('followup-modal');
+}
+
+async function saveFollowup() {
+  const title = document.getElementById('fu-title').value.trim();
+  if (!title) { showToast('El titulo es obligatorio', 'error'); return; }
+  const data = {
+    title,
+    notes: document.getElementById('fu-notes').value,
+    project_id: document.getElementById('fu-project').value || null,
+    priority: document.getElementById('fu-priority').value || 'media',
+    deadline: document.getElementById('fu-deadline').value || null,
+    recurrence: 'none', done: false, sort_order: state.tasks.length
+  };
+  try {
+    const res = await sbFetch('tasks', { method: 'POST', body: JSON.stringify(data) });
+    const newTask = Array.isArray(res) ? res[0] : res;
+    if (newTask) {
+      state.tasks.push(newTask);
+      const originId = document.getElementById('fu-project').dataset.originId;
+      const originTags = state.taskTags[originId] || [];
+      for (const tagId of originTags) {
+        await sbFetch('task_tags', { method: 'POST', body: JSON.stringify({ task_id: newTask.id, tag_id: tagId }) }).catch(() => {});
+      }
+      if (originTags.length) state.taskTags[newTask.id] = [...originTags];
+    }
+    closeModal('followup-modal');
+    showToast('Seguimiento creado', 'success');
+    renderSidebar(); renderView();
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 // ═══════════════════════════════════════════════════
