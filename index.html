@@ -802,8 +802,6 @@ function renderSidebar() {
     el.dataset.id = p.id;
     el.draggable = true;
     el.innerHTML = `<span class="drag-handle" title="Arrastrar">⠿</span><span class="project-dot" style="background:${p.color}"></span><span style="flex:1">${esc(p.name)}</span>${pending?`<span class="count">${pending}</span>`:''}`;
-    el.querySelector(':not(.drag-handle)').addEventListener('click', ()=>navigate('project',p.id));
-    el.querySelector('.project-item').addEventListener && void 0;
     el.addEventListener('click', e=>{ if(!e.target.classList.contains('drag-handle')) navigate('project',p.id); });
     el.addEventListener('dblclick', ()=>openEditProject(p));
     setupProjectDrag(el, p);
