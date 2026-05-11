@@ -459,6 +459,7 @@ input[type=color]{padding:2px;height:36px;cursor:pointer}
             <option value="none">Sin recurrencia</option>
             <option value="daily">Diaria</option>
             <option value="weekly">Semanal</option>
+            <option value="biweekly">Quincenal</option>
             <option value="monthly">Mensual</option>
             <option value="yearly">Anual</option>
           </select>
@@ -1392,6 +1393,7 @@ async function createRecurrence(task){
   const d=new Date(task.deadline);
   if(task.recurrence==='daily') d.setDate(d.getDate()+1);
   else if(task.recurrence==='weekly') d.setDate(d.getDate()+7);
+  else if(task.recurrence==='biweekly') d.setDate(d.getDate()+14);
   else if(task.recurrence==='monthly') d.setMonth(d.getMonth()+1);
   else if(task.recurrence==='yearly') d.setFullYear(d.getFullYear()+1);
   const newTask={title:task.title,notes:task.notes,project_id:task.project_id,priority:task.priority,deadline:fmtYMD(d),due_time:task.due_time,recurrence:task.recurrence,done:false,sort_order:task.sort_order};
