@@ -1268,7 +1268,8 @@ async function openEditTask(id) {
   document.getElementById('task-notes').value=task.notes||'';
   document.getElementById('task-deadline').value=task.deadline||'';
   document.getElementById('task-due-time').value=task.due_time||'';
-  document.getElementById('task-priority').value=task.priority||'media';
+  const validPriorities=['urgente','alta','media','baja'];
+  document.getElementById('task-priority').value=validPriorities.includes(task.priority)?task.priority:'media';
   document.getElementById('task-recurrence').value=task.recurrence||'none';
   document.getElementById('task-delete-btn').style.display='';
   document.getElementById('task-modal-title').textContent='Editar Tarea';
@@ -1292,7 +1293,7 @@ async function saveTask() {
     title,
     notes:document.getElementById('task-notes').value,
     project_id:document.getElementById('task-project').value||null,
-    priority:document.getElementById('task-priority').value,
+    priority:document.getElementById('task-priority').value||'media',
     deadline:document.getElementById('task-deadline').value||null,
     due_time:document.getElementById('task-due-time').value||null,
     recurrence:document.getElementById('task-recurrence').value,
