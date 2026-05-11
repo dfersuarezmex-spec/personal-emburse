@@ -108,7 +108,7 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);font-si
 /* ─── DASHBOARD ─── */
 .dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:18px 20px;display:flex;align-items:center;gap:14px;transition:border .2s}
-.stat-card:hover{border-color:var(--border2)}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
 .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .stat-icon.blue{background:rgba(79,142,247,.15);color:var(--accent)}
 .stat-icon.red{background:rgba(244,63,94,.15);color:var(--red)}
@@ -917,9 +917,9 @@ function renderDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = `
     <div class="dash-grid">
-      <div class="stat-card"><div class="stat-icon blue">📋</div><div><div class="stat-val">${pending}</div><div class="stat-lbl">Pendientes</div></div></div>
-      <div class="stat-card"><div class="stat-icon red">⚠️</div><div><div class="stat-val">${overdue}</div><div class="stat-lbl">Vencidas</div></div></div>
-      <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-val">${done}</div><div class="stat-lbl">Completadas</div></div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="goToTaskFilter('pending')"><div class="stat-icon blue">📋</div><div><div class="stat-val">${pending}</div><div class="stat-lbl">Pendientes</div></div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="goToTaskFilter('overdue')"><div class="stat-icon red">⚠️</div><div><div class="stat-val">${overdue}</div><div class="stat-lbl">Vencidas</div></div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="goToTaskFilter('done')"><div class="stat-icon green">✅</div><div><div class="stat-val">${done}</div><div class="stat-lbl">Completadas</div></div></div>
     </div>
 
     <div class="dash-bottom">
@@ -927,22 +927,23 @@ function renderDashboard() {
         <div class="section-title"><span>📊 Tareas por Proyecto</span></div>
         <div class="bar-chart" id="bar-chart">
           ${projStats.filter(p=>p.total>0).slice(0,6).map(p=>`
-            <div class="bar-col">
+            <div class="bar-col" style="cursor:pointer" onclick="navigate('project','${p.id}')" title="${esc(p.name)}">
               <div class="bar-val">${p.total}</div>
-              <div class="bar-wrap"><div class="bar" style="height:${Math.round(p.total/maxBar*100)}px;background:${p.color}"></div></div>
+              <div class="bar-wrap"><div class="bar" style="height:${Math.round(p.total/maxBar*100)}px;background:${p.color};transition:opacity .15s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"></div></div>
               <div class="bar-lbl">${esc(p.name.slice(0,8))}</div>
             </div>`).join('')}
         </div>
         <hr class="divider"/>
         <div class="section-title"><span>📁 Resumen por Proyecto</span></div>
         ${projStats.map(p=>`
-          <div class="proj-summary-row">
+          <div class="proj-summary-row" style="cursor:pointer" onclick="navigate('project','${p.id}')" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
             <span class="project-dot" style="background:${p.color}"></span>
             <span class="proj-summary-name">${esc(p.name)}</span>
             <div class="proj-summary-bar">
               <div class="progress-bar"><div class="progress-fill" style="width:${p.total?Math.round(p.done/p.total*100):0}%;background:${p.color}"></div></div>
             </div>
             <span class="text-xs text-muted" style="min-width:40px;text-align:right">${p.done}/${p.total}</span>
+            <span style="font-size:11px;color:var(--accent);margin-left:6px">›</span>
           </div>`).join('')}
       </div>
 
@@ -1846,6 +1847,12 @@ function lockApp() {
   document.getElementById('lock-screen').style.display = 'flex';
   pinBuffer = ''; updateDots();
   document.getElementById('pin-error').textContent = '';
+}
+
+function goToTaskFilter(filter) {
+  state.taskFilter = filter;
+  state.currentProject = null;
+  navigate('tasks');
 }
 
 // Init PIN check
