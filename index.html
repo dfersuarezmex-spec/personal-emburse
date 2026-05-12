@@ -48,7 +48,26 @@ body{font-family:var(--font-sans);background:var(--bg);color:var(--text);font-si
 
 /* ─── LAYOUT ─── */
 #app{display:flex;height:100vh;overflow:hidden}
-#sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden;min-height:0}
+#sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;overflow-x:hidden;min-height:0;transition:width .25s cubic-bezier(.4,0,.2,1)}
+#sidebar.collapsed{width:60px;overflow:hidden}
+#sidebar.collapsed .sidebar-brand .name,
+#sidebar.collapsed .sidebar-brand .sub,
+#sidebar.collapsed .nav-item span:not(.nav-icon),
+#sidebar.collapsed .nav-item .badge,
+#sidebar.collapsed .projects-header span,
+#sidebar.collapsed .projects-header .btn-icon,
+#sidebar.collapsed .project-item .proj-summary-name,
+#sidebar.collapsed .project-item span:not(.project-dot):not(.drag-handle),
+#sidebar.collapsed .project-item .count{display:none}
+#sidebar.collapsed .nav-section{display:none}
+#sidebar.collapsed .project-item{justify-content:center;padding:7px 0}
+#sidebar.collapsed .project-dot{margin:0}
+#sidebar.collapsed .nav-item{justify-content:center;padding:8px 0}
+#sidebar.collapsed .nav-icon{width:auto;font-size:18px}
+#sidebar.collapsed .sidebar-brand{justify-content:center;padding:14px 0}
+#sidebar.collapsed .sidebar-brand .icon{margin:0}
+#sidebar.collapsed .projects-header{justify-content:center;padding:10px 0 4px}
+#app{transition:none}
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 #topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
 #content{flex:1;overflow-y:auto;padding:24px}
@@ -388,7 +407,7 @@ input[type=color]{padding:2px;height:36px;cursor:pointer}
   <!-- MAIN -->
   <div id="main">
     <div id="topbar">
-      <button class="topbar-btn" id="menu-btn" onclick="toggleSidebar()" style="display:none;font-size:18px">☰</button>
+      <button class="topbar-btn" id="menu-btn" onclick="toggleSidebar()" style="font-size:18px">☰</button>
       <span class="topbar-title" id="topbar-title">Dashboard</span>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
@@ -757,6 +776,7 @@ async function sbUpload(file) {
 // ═══════════════════════════════════════════════════
 async function initApp() {
   checkMobile();
+  initSidebarState();
   if (!SB_URL || !SB_KEY) {
     navigate('config');
     showToast('Configura la URL y clave de Supabase','warning');
@@ -1797,18 +1817,34 @@ function showToast(msg, type='success') {
 // MOBILE
 // ═══════════════════════════════════════════════════
 function checkMobile() {
-  const mobile=window.innerWidth<768;
-  document.getElementById('menu-btn').style.display=mobile?'':'none';
+  const mobile = window.innerWidth < 768;
+  const sidebar = document.getElementById('sidebar');
+  if (mobile) {
+    sidebar.classList.remove('collapsed');
+  }
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('show');
+  const mobile = window.innerWidth < 768;
+  const sidebar = document.getElementById('sidebar');
+  if (mobile) {
+    sidebar.classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('show');
+  } else {
+    sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebar_collapsed', sidebar.classList.contains('collapsed') ? '1' : '0');
+  }
 }
 
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
+}
+
+function initSidebarState() {
+  if (window.innerWidth >= 768 && localStorage.getItem('sidebar_collapsed') === '1') {
+    document.getElementById('sidebar').classList.add('collapsed');
+  }
 }
 
 window.addEventListener('resize',checkMobile);
